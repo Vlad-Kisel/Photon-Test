@@ -75,7 +75,7 @@ namespace _Project.Code.Infrastructure.Network
             
             Debug.Log($"Game LoadGameScene {Runner.SceneManager.MainRunnerScene.path}");
             await _gameServicesWrapper.GameLogic.PrepareGame(Runner);
-            _gameServicesWrapper.GameLogic.Register(this);
+            _gameServicesWrapper.GameLogic.RegisterOnRunner(this);
             
             Debug.Log($"Game start done {Runner.SceneManager.MainRunnerScene.path}");
             foreach (var playerRef in Runner.ActivePlayers)

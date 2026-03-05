@@ -19,8 +19,8 @@ namespace _Project.Code.Infrastructure.Network
         [Inject]
         public void Construct(GameLogic gameLogic, InputService inputService)
         {
-            gameLogic.Register((INetworkRunnerCallbacks)this);
-            gameLogic.Register((SimulationBehaviour)this);
+            gameLogic.RegisterOnRunner((INetworkRunnerCallbacks)this);
+            gameLogic.RegisterOnRunner((SimulationBehaviour)this);
             
             _inputService = inputService;
         }

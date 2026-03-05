@@ -9,8 +9,6 @@ namespace _Project.Code.Infrastructure.Network
 {
     public class GameLogic : SimulationBehaviour, IPlayerJoined, IPlayerLeft, ICoroutineRunner, IDisposable
     {
-        public static GameLogic Instance {get; private set;}
-        
         [SerializeField] private GameNetworkContext _networkGameContextPrefab;
         [SerializeField] private LocalPlayerSetupService _playerSetupService;
         
@@ -20,7 +18,6 @@ namespace _Project.Code.Infrastructure.Network
         private PlayerFactory _playerFactory;
         private PlayerProvider _playerProvider;
         private EnemiesProvider _enemiesProvider;
-        private DiContainer _diContainer;
 
         private List<INetworkRunnerCallbacks> _callbacks =  new List<INetworkRunnerCallbacks>();
         private List<SimulationBehaviour> _simulationBehaviours = new List<SimulationBehaviour>();
@@ -30,15 +27,12 @@ namespace _Project.Code.Infrastructure.Network
         
         [Inject]
         public void Construct(Game game, PlayerFactory playerFactory, PlayerProvider playerProvider,
-            DiContainer diContainer, EnemiesProvider enemiesProvider)
+            EnemiesProvider enemiesProvider)
         {
             _game = game;
             _playerFactory = playerFactory;
             _playerProvider = playerProvider;
             _enemiesProvider = enemiesProvider;
-            _diContainer = diContainer;
-            
-            Instance = this;
         }
         
         public void Init(GameNetworkContext networkContext)
@@ -46,19 +40,29 @@ namespace _Project.Code.Infrastructure.Network
             NetworkGameContext = networkContext;
         }
 
+        public void PlayerLeft(PlayerRef playerRef)
+        {
+            if(!_game.Runner.IsServer || NetworkGameContext == null)
+                return;
+            
+            PlayerConnectionService.Left(playerRef);
+        }
+
+        public void PlayerJoined(PlayerRef playerRef)
+        {
+            if(!_game.Runner.IsServer ||  NetworkGameContext == null)
+                return;
+            
+            PlayerConnectionService.Join(playerRef);
+        }
+
         public async Task HostMigrationResume(NetworkRunner runner) => 
             HostMigrationService.HostMigrationResume(runner);
 
-        private void RestoreRegistrations()
-        {
-            _callbacks.ForEach(x => Runner.AddCallbacks(x));
-            _simulationBehaviours.ForEach(x => Runner.AddGlobal(x));
-        }
-        
-        public void Register(SimulationBehaviour behaviour) => 
+        public void RegisterOnRunner(SimulationBehaviour behaviour) => 
             _simulationBehaviours.Add(behaviour);
 
-        public void Register(INetworkRunnerCallbacks callbacks) => 
+        public void RegisterOnRunner(INetworkRunnerCallbacks callbacks) => 
             _callbacks.Add(callbacks);
 
         public async Task  PrepareGame(NetworkRunner runner)
@@ -74,6 +78,21 @@ namespace _Project.Code.Infrastructure.Network
             RestoreRegistrations();
             
             _playerSetupService.Init();
+        }
+
+        public void RegisterPlayerInstance(Player instance)
+        {
+            instance.GetComponent<Death>()
+                .OnDie += BanPlayer;
+            
+            if(!_playerProvider.Players.ContainsKey(instance.PlayerId))
+                _playerProvider.Register(instance.PlayerId, instance);
+        }
+
+        private void RestoreRegistrations()
+        {
+            _callbacks.ForEach(x => Runner.AddCallbacks(x));
+            _simulationBehaviours.ForEach(x => Runner.AddGlobal(x));
         }
 
         private void DestroyPlayer(Player player)
@@ -94,20 +113,11 @@ namespace _Project.Code.Infrastructure.Network
             var newPlayer = _playerFactory.Create(Vector3.up, Quaternion.identity, connectionData, connectionData.PlayerId.GetHashCode());
             newPlayer.Object.AssignInputAuthority(playerRef);
 
-            Register(newPlayer);
+            RegisterPlayerInstance(newPlayer);
             
             return newPlayer;
         }
 
-        public void Register(Player instance)
-        {
-            instance.GetComponent<Death>()
-                .OnDie += BanPlayer;
-            
-            if(!_playerProvider.Players.ContainsKey(instance.PlayerId))
-                _playerProvider.Register(instance.PlayerId, instance);
-        }
-        
         private void BanPlayer(Death death)
         {
             death.OnDie -= BanPlayer;
@@ -115,22 +125,6 @@ namespace _Project.Code.Infrastructure.Network
             var playerId = death.GetComponent<Player>().PlayerId;
             
             PlayerConnectionService.Ban(playerId);
-        }
-
-        public void PlayerLeft(PlayerRef playerRef)
-        {
-            if(!_game.Runner.IsServer || NetworkGameContext == null)
-                return;
-            
-            PlayerConnectionService.Left(playerRef);
-        }
-
-        public void PlayerJoined(PlayerRef playerRef)
-        {
-            if(!_game.Runner.IsServer ||  NetworkGameContext == null)
-                return;
-            
-            PlayerConnectionService.Join(playerRef);
         }
 
         private async Task InitNetworkServicesStates(NetworkRunner runner)
@@ -152,16 +146,12 @@ namespace _Project.Code.Infrastructure.Network
                    !NetworkGameContext.Object.IsValid)
                 await Task.Yield();
 
-            _diContainer.Inject(NetworkGameContext);
             await NetworkGameContext.InitStates();
         }
 
-        
         public void Dispose()
         {
             PlayerConnectionService?.Dispose();
-            
-            Instance = null;
         }
     }
 }

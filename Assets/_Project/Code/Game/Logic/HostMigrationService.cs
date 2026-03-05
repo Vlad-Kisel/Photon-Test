@@ -34,6 +34,7 @@ namespace _Project.Code.Infrastructure.Network
             _players.Clear();
             _enemies.Clear();
             _drops.Clear();
+            _gameContext.Clear();
         }
 
         private void Collect(NetworkRunner runner)
@@ -89,7 +90,7 @@ namespace _Project.Code.Infrastructure.Network
         private void RegisterPlayer(Player player)
         {
             _gameLogic.PlayerConnectionService.AddSpawnedNotActivePlayer(player);
-            _gameLogic.Register(player);
+            _gameLogic.RegisterPlayerInstance(player);
         }
     }
 }

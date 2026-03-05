@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4380411186691832182}
   - component: {fileID: 5626360491810367599}
   - component: {fileID: 5927945778063026736}
+  - component: {fileID: 1441876459389285205}
   m_Layer: 0
   m_Name: GameNetworkContext
   m_TagString: Untagged
@@ -71,6 +72,19 @@ MonoBehaviour:
   _BlackListId: 
   _EnemiesProviderState: {fileID: 5391562907704322664}
   _PlayerProviderState: {fileID: 7170373023634772246}
+--- !u!114 &1441876459389285205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2245081128988078219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 717a02054ef2699498e6bd4234fd7995, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _containerSource: 0
 --- !u!1 &3302653177220852522
 GameObject:
   m_ObjectHideFlags: 0

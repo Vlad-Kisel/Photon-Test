@@ -13,19 +13,21 @@ namespace _Project.Code.Infrastructure.Network
         [SerializeField, Networked] public EnemiesProviderState EnemiesProviderState {get; private  set; }
         [SerializeField, Networked] public PlayerProviderState PlayerProviderState {get; private set; }
         
-        private DiContainer _container;
         private GameLogic _gameLogic;
+        private EnemiesProvider _enemiesProvider;
+        private PlayerProvider _playerProvider;
 
         [Inject]
-        public void Construct(DiContainer container)
+        public void Construct(GameLogic gameLogic, EnemiesProvider enemiesProvider, PlayerProvider playerProvider)
         {
-            _container = container;
+            _gameLogic = gameLogic;
+            _enemiesProvider = enemiesProvider;
+            _playerProvider = playerProvider;
         }
 
         public override void Spawned()
         {
-            _gameLogic = GameLogic.Instance;
-            SetupGame();
+            SetupGameLogic();
         }
         
         public async Task InitStates()
@@ -41,17 +43,14 @@ namespace _Project.Code.Infrastructure.Network
             while (!PlayerProviderState.Object.IsValid)
                 await Task.Yield();
             
-            _container.Resolve<EnemiesProvider>().Init(EnemiesProviderState);
-            _container.Resolve<PlayerProvider>().Init(PlayerProviderState);
+            _enemiesProvider.Init(EnemiesProviderState);
+            _playerProvider.Init(PlayerProviderState);
             
             Debug.Log("InitStates end");
         }
 
-        private void SetupGame()
+        private void SetupGameLogic()
         {
-            if(_gameLogic == null)
-                return;
-            
             _gameLogic.Init(this);
         }
     }

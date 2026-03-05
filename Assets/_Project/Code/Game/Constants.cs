@@ -6,7 +6,7 @@ namespace _Project.Code.Infrastructure.Network
         // General
         // ----------------------------
         public const int MaxPlayerCount = 50;
-        public const int MaxEnemyCount = 10;
+        public const int MaxEnemyCount = 100;
 
         // ----------------------------
         // Player Base Stats
